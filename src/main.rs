@@ -6,9 +6,9 @@ use sea_orm::{ConnectOptions, Database};
 use std::time::Duration;
 
 #[tokio::main]
-async fn main() {
+async fn main() -> anyhow::Result<()> {
     let mut options =
-        ConnectOptions::new("postgres://postgres:postgres@postgres:5432/app_new_db".to_owned());
+        ConnectOptions::new("postgres://postgres:postgres@localhost:5432/app_db".to_owned());
 
     options
         .max_connections(100)
@@ -21,12 +21,13 @@ async fn main() {
         .sqlx_logging_level(log::LevelFilter::Debug)
         .set_schema_search_path("schema".into());
 
-    let db = Database::connect(options).await.unwrap();
+    let db = Database::connect(options).await?;
 
     let app = Router::new().route("/", get(|| async { "Hello, World!" }));
 
     axum::Server::bind(&"0.0.0.0:8000".parse().unwrap())
         .serve(app.into_make_service())
-        .await
-        .unwrap();
+        .await?;
+
+    Ok(())
 }
